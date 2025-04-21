@@ -1,11 +1,12 @@
 desc:Tester for PRLibrary Alpha 5
 author: Phil Ranger
-version: 0.Alpha4
+version: 0.Alpha5
 provides:
-  philranger_GUI and Audio Library/PhilRangerAudioLibraryAlpha4.jsfx-inc
+  philranger_GUI and Audio Library/PhilRangerAudioLibraryAlpha5.jsfx-inc
   philranger_GUI and Audio Library/Knob.png
   philranger_GUI and Audio Library/Highlight.png
   philranger_GUI and Audio Library/Switch.png
+  Widget test set for PRLibrary.jsfx
 about:
   This is about the library, not the plugin itself as it is given only as an example of using most of the library functions.
   Comments welcome!
@@ -39,7 +40,7 @@ filename:2,philranger_GUI and Audio Library/Switch.png
 
 // Adding a "-" right after the > would make the default slider invisible
 
-// Named values have to start at zero.
+// Named values have to start at zero:
 slider1:EQStyle=0<0,6,1,{Peaking,Low Pass, High Pass, Band Pass, Notch, Low Shelf, High Shelf}>-EQ Style
 slider2:Frequency=1000<20,20000,1>-Frequency (Hz)
 slider3:Gain=0<-24,24,1>-Gain (dB)
@@ -57,23 +58,22 @@ out_pin:right output
 
 @init
   // Initialize Slider ranges.  I'd love to find a way to avoid this duplication!
-  // SliderNumber DefaultValue MinValue MaxValue [Linearity]:
+  MyEQNames = PR.NewList("Peaking","Low Pass","High Pass","Band Pass","Notch","Low Shelf","High Shelf");
+ // SliderNumber DefaultValue MinValue MaxValue [Linearity]:
   mySlider2=PR.NewSlider(2,1000,20,20000,1); // Frequency, non linear
   mySlider3=PR.NewSlider(3,0,-24,24); // Gain
   mySlider4=PR.NewSlider(4,0.5,0.1,10,1); //Q, non linear
-  mySlider5=PR.NewSlider(5,120,0.1,1000,1); // Delayms
+  mySlider5=PR.NewSlider(5,120,0.1,1000,1); // Delayms, non linear
   mySlider6=PR.NewSlider(6,30,0,100); //Feedback
   mySlider7=PR.NewSlider(7,20,0,100); // Delay Mix
   mySlider8=PR.NewSlider(8,-3,-20,15); // Clip Level
 
-  // Reserve memory for the processors
+  // Reserve memory for the audio processors
   myDelay=PR.NewStereoDelay(1000) ;// Maximum delay, in milliseconds.  Mono Delay also exists
   myEQ=PR.NewStereoEQ(); // PR.NewMonoEQ also exists
   myEnvelopeFollower=PR.NewMonoEnvelopeFollower();
   // Since its parameters never change for this plugin, I set the enveloppe follower it in the init block:
   PR.SetMonoEnvelopeFollower(myEnvelopeFollower, 0.001, 1);  // Attack and Release Time
-
-  MyEQNames = PR.NewList("Peaking","Low Pass","High Pass","Band Pass","Notch","Low Shelf","High Shelf");
 
 @slider // No need to do anything here as I used named variables for the slider definitions
 
@@ -90,7 +90,6 @@ out_pin:right output
   PR.SetStereoDelay(myDelay,Delayms,Feedback);
 
 @sample
-  // EQ pseudo object (as defined by PR.NewStereoEQ() and PR.SetStereoPeakingEQ), input Left, Input Right
   PR.StereoEQ(myEQ,spl0,spl1); // Processed samples will be in myEQ[0] and myEQ[1]
 
   // Unmute (or not) output of the eq
@@ -104,8 +103,8 @@ out_pin:right output
 
   // Using a enveloppe follower for the meter
   myMeterValue = PR.MonoEnvelopeFollower(myEnvelopeFollower, (spl0+spl1)/2); // Value, AttackTime, ReleaseTime
-@gfx 600 600
 
+@gfx 600 600
   // right click = default value, ctrl-drag = smaller movements
   // All dimensions are in % of the plugin width
   // X and Y are the center of the shapes
@@ -115,7 +114,7 @@ out_pin:right output
   PR.DisplayPanel(50,50,98,98); // You could also use PR.SetShape and call PR.DisplayPanel without parameters.
   // Add a highlight picture because I think it looks cool
   gfx_a = 0.3; // Picture will be quite transparent.
-  PR.DisplayPicture(70,70,150,0); // x,y,width,PictureNumber.
+  PR.DisplayPicture(70,70,150,0); // x, y, width, PictureNumber.
   // Name of the plugin
   PR.DisplayText(50,5,5,"My First Little Plugin v0.5",'b');// x,y,size,text
 
@@ -123,30 +122,30 @@ out_pin:right output
   // Little panel to visually define the EQ section
   PR.Color.Panel="100040A0"; // Dark Violet.
   PR.DisplayPanel(50,30,90,40);
-  PR.SetShape(18,25,12);
-  PR.DisplayRotarySwitch(1,7); // Slider, NumberodSteps,[PictureNumber].  Slider values will go from 0 to Steps-1
-  PR.DisplayText(18,35,4,"EQ Type:"); // x,y,size,text
+  
+  PR.SetShape(18,25,12); // Center X, Center Y, Width [, Height]
+  PR.DisplayRotarySwitch(1,7); // SliderNumber, NumberOfSteps,[PictureNumber,X,Y,Size].  Slider values will go from 0 to NumberOfSteps-1
+  PR.DisplayText(18,35,4,"EQ Type:");
   PR.DisplayText(18,40,3.5,MyEQNames[EQStyle]);
 
-  PR.DisplayText(42,46,4,"Frequency"); //x,y,size,text
-  PR.SetShape(42,28,6,32); // Center X %, Center Y %, Width % Height %
-  PR.DisplaySlider(mySlider2); // SliderNumber,[PictureNumber].
+  PR.DisplayText(42,46,4,"Frequency");
+  PR.SetShape(42,28,6,32);
+  PR.DisplaySlider(mySlider2); // SliderNumber,[PictureNumber,X,Y,Size].
 
-  PR.DisplayText(60,35,4,"Gain (dB)"); // x,y,size,text
+  PR.DisplayText(60,35,4,"Gain (dB)");
   PR.SetShape(60,25,12); // will be a round knob.  Center x, center y, Size
-  PR.DisplayKnob(mySlider3); // Slider (or slidernumber),[PictureNumber]
+  PR.DisplayKnob(mySlider3); // Slider (or slidernumber),[PictureNumber,X,Y,Size]
 
-  PR.DisplayText(80,35,4,"Q"); // x,y,size,text
+  PR.DisplayText(80,35,4,"Q");
   PR.SetShape(80,25,12);
   PR.DisplayKnob(mySlider4);
 
   // Delay Section
   PR.DisplayPanel(50,63,90,24);
-//myslider5[4]=0;
   PR.DisplayText(20,71,4,"Delay (ms)"); // x,y,size,text
   PR.SetShape(20,60,12);
   // Now using pictures instead of default shapes
-  PR.DisplayKnob(mySlider5,1);// SliderNumber,[PictureNumber]. Uses PR.Color.Contour; PR.Color.Main; PR.Color.Shadow; PR.Color.Text;
+  PR.DisplayKnob(mySlider5,1);// SliderNumber,[PictureNumber,X,Y,Size]
 
   PR.DisplayText(50,71,4,"Feedback (%)"); // x,y,size,text
   PR.SetShape(50,60,12);
@@ -165,7 +164,7 @@ out_pin:right output
 
   // Unmute section
   PR.DisplayPanel(62,87,13,22);
-  PR.DisplayText(62,94,4,"Unmute"); // x,y,size,text
+  PR.DisplayText(62,94,4,"Unmute");
   PR.DisplaySwitch(9,2,62,85,5,9); // SliderNumber [,PictureNumber,X,Y,W,H]
 
   // Output meter section
